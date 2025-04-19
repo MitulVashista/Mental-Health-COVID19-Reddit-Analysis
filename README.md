@@ -16,7 +16,7 @@ This project analyzes Reddit posts related to mental health during the COVID-19 
 
 1. Clone this repository:
 
-    `git clone https://github.com/mitulvashista123/Mental-Health-COVID19-Reddit-Analysis.git`
+    `git clone https://github.com/MitulVashista/Mental-Health-COVID19-Reddit-Analysis.git`
 
     `cd Mental-Health-COVID19-Reddit-Analysis`
 
@@ -102,4 +102,4 @@ Contributions to this project are welcome. Please fork the repository and submit
 ## Contact
 Mitul Vashista - mitulvashista123@gmail.com vashista.1@iitj.ac.in
 
-Project Link: [https://github.com/mitulvashista123/Mental-Health-COVID19-Reddit-Analysis](https://github.com/mitulvashista123/Mental-Health-COVID19-Reddit-Analysis)
+Project Link: [https://github.com/MitulVashista/Mental-Health-COVID19-Reddit-Analysis](https://github.com/MitulVashista/Mental-Health-COVID19-Reddit-Analysis)
