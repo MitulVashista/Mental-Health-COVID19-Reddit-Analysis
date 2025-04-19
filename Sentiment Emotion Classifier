@@ -1,0 +1,190 @@
+# # Advanced ML with SBERT, Hierarchical Clustering, and UMAP for Reddit Mental Health Analysis
+
+# import pandas as pd
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+# from sklearn.cluster import AgglomerativeClustering
+# import umap.umap_ as umap
+# from sentence_transformers import SentenceTransformer
+# import nltk
+# from nltk.corpus import stopwords
+# from nltk.tokenize import word_tokenize
+# import re
+# import os
+# from sklearn.ensemble import RandomForestClassifier
+# from sklearn.model_selection import train_test_split
+# from sklearn.metrics import classification_report, confusion_matrix
+
+# # Load data
+# df = pd.read_csv("mental_health_covid_posts.csv")
+
+# # NLTK setup
+# nltk.download('punkt')
+# nltk.download('stopwords')
+# stop_words = set(stopwords.words('english'))
+
+# # Preprocess text for embeddings
+# def clean_text(text):
+#     text = re.sub(r"http\S+", "", text.lower())
+#     tokens = word_tokenize(text)
+#     tokens = [word for word in tokens if word.isalpha() and word not in stop_words]
+#     return " ".join(tokens)
+
+# df['cleaned_text'] = df['processed_text'].fillna('').apply(clean_text)
+
+# # SBERT Embedding
+# print("Encoding text using SBERT...")
+# model = SentenceTransformer('all-MiniLM-L6-v2')
+# embeddings = model.encode(df['cleaned_text'].tolist(), show_progress_bar=True)
+
+# # Fix: Remove 'affinity' argument for sklearn >= 1.2
+# print("Clustering using Agglomerative Clustering...")
+# cluster_model = AgglomerativeClustering(n_clusters=5, linkage='ward')
+# df['cluster'] = cluster_model.fit_predict(embeddings)
+
+# # UMAP Dimensionality Reduction
+# print("Applying UMAP...")
+# reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric='cosine')
+# umap_result = reducer.fit_transform(embeddings)
+# df['umap_x'] = umap_result[:, 0]
+# df['umap_y'] = umap_result[:, 1]
+
+# # Plot UMAP Clusters
+# plt.figure(figsize=(10, 6))
+# sns.scatterplot(data=df, x='umap_x', y='umap_y', hue='cluster', palette='tab10')
+# plt.title('Hierarchical Clustering of Posts (UMAP Reduced)')
+# plt.savefig("sbert_umap_clusters.png")
+# plt.close()
+
+# # Optional Advanced Classifier (e.g., predicting subreddit from SBERT)
+# y = df['subreddit']
+# X_train, X_test, y_train, y_test = train_test_split(embeddings, y, test_size=0.2, stratify=y, random_state=42)
+# clf = RandomForestClassifier(n_estimators=100, random_state=42)
+# clf.fit(X_train, y_train)
+# y_pred = clf.predict(X_test)
+# print("\nSubreddit Classification Report using SBERT Embeddings:")
+# print(classification_report(y_test, y_pred))
+
+# # Word Cloud by Subreddit
+# from wordcloud import WordCloud
+# for sub in df['subreddit'].unique():
+#     text = " ".join(df[df['subreddit'] == sub]['cleaned_text'])
+#     wc = WordCloud(width=800, height=400, background_color='white').generate(text)
+#     plt.figure(figsize=(10, 5))
+#     plt.imshow(wc, interpolation='bilinear')
+#     plt.axis("off")
+#     plt.title(f"Word Cloud for r/{sub}")
+#     plt.savefig(f"wordcloud_{sub}.png")
+#     plt.close()
+
+# print("Clustering, classification, and word cloud visualizations saved.")
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import AgglomerativeClustering
+import umap.umap_ as umap
+from sentence_transformers import SentenceTransformer
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import re
+import os
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
+
+# Load data
+df = pd.read_csv("mental_health_covid_posts.csv")
+
+# NLTK setup
+nltk.download('punkt')
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+
+# Preprocess text for embeddings
+def clean_text(text):
+    text = re.sub(r"http\S+", "", text.lower())
+    tokens = word_tokenize(text)
+    tokens = [word for word in tokens if word.isalpha() and word not in stop_words]
+    return " ".join(tokens)
+
+df['cleaned_text'] = df['processed_text'].fillna('').apply(clean_text)
+
+# SBERT Embedding
+print("Encoding text using SBERT...")
+model = SentenceTransformer('all-MiniLM-L6-v2')
+embeddings = model.encode(df['cleaned_text'].tolist(), show_progress_bar=True)
+
+print("Clustering using Agglomerative Clustering...")
+cluster_model = AgglomerativeClustering(n_clusters=5, linkage='ward')
+df['cluster'] = cluster_model.fit_predict(embeddings)
+
+# UMAP Dimensionality Reduction
+print("Applying UMAP...")
+reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric='cosine')
+umap_result = reducer.fit_transform(embeddings)
+df['umap_x'] = umap_result[:, 0]
+df['umap_y'] = umap_result[:, 1]
+
+# # Find the most common subreddit per cluster
+# cluster_subreddit_mapping = df.groupby('cluster')['subreddit'].agg(lambda x: x.mode()[0]).to_dict()
+
+# # Map cluster IDs to subreddit names
+# df['subreddit_cluster'] = df['cluster'].map(cluster_subreddit_mapping)
+
+# # Plot UMAP Clusters with subreddit names as legend
+# plt.figure(figsize=(10, 6))
+# sns.scatterplot(data=df, x='umap_x', y='umap_y', hue='subreddit_cluster', palette='tab10')
+# plt.title('Hierarchical Clustering of Posts (UMAP Reduced)')
+# plt.legend(title='Subreddit', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+# plt.tight_layout()  # Ensures the plot is not cut off
+# plt.savefig("sbert_umap_clusters.png")
+# plt.close()
+
+# Dynamically assign cluster labels based on dominant subreddit in each cluster
+cluster_labels_map = {}
+
+for cluster_id in sorted(df['cluster'].unique()):
+    dominant_subreddit = df[df['cluster'] == cluster_id]['subreddit'].mode()[0]
+    cluster_labels_map[cluster_id] = f"Cluster {cluster_id} ({dominant_subreddit})"
+
+# Map to new column
+df['cluster_label'] = df['cluster'].map(cluster_labels_map)
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(
+    data=df,
+    x='umap_x',
+    y='umap_y',
+    hue='cluster_label',
+    palette='tab10'
+)
+plt.title('Hierarchical Clustering of Posts (UMAP Reduced)')
+plt.legend(title='Subreddit', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.savefig("sbert_umap_clusters.png")
+plt.close()
+
+# Optional Advanced Classifier (e.g., predicting subreddit from SBERT)
+y = df['subreddit']
+X_train, X_test, y_train, y_test = train_test_split(embeddings, y, test_size=0.2, stratify=y, random_state=42)
+clf = RandomForestClassifier(n_estimators=100, random_state=42)
+clf.fit(X_train, y_train)
+y_pred = clf.predict(X_test)
+print("\nSubreddit Classification Report using SBERT Embeddings:")
+print(classification_report(y_test, y_pred))
+
+# Word Cloud by Subreddit
+from wordcloud import WordCloud
+for sub in df['subreddit'].unique():
+    text = " ".join(df[df['subreddit'] == sub]['cleaned_text'])
+    wc = WordCloud(width=800, height=400, background_color='white').generate(text)
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis("off")
+    plt.title(f"Word Cloud for r/{sub}")
+    plt.savefig(f"wordcloud_{sub}.png")
+    plt.close()
+
+print("Clustering, classification, and word cloud visualizations saved.")
