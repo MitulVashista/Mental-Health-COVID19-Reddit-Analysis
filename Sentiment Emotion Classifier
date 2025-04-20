@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.cluster import AgglomerativeClustering
@@ -11,7 +12,9 @@ import re
 import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+import warnings
+warnings.filterwarnings("ignore")
 
 # Load data
 df = pd.read_csv("mental_health_covid_posts.csv")
@@ -92,3 +95,13 @@ for sub in df['subreddit'].unique():
     plt.close()
 
 print("Clustering, classification, and word cloud visualizations saved.")
+
+cm = confusion_matrix(y_test, y_pred, 
+                      labels=['depression', 'Anxiety', 'mentalhealth', 'SuicideWatch', 'bipolar'])
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, 
+                              display_labels=['depression', 'Anxiety', 'mentalhealth', 'SuicideWatch', 'bipolar'])
+disp.plot(cmap='Blues')
+plt.title("Confusion Matrix - Subreddit Classification")
+plt.tight_layout()
+plt.savefig("confusion_matrix.png")
+plt.close()
